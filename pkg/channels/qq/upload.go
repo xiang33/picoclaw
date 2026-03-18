@@ -7,6 +7,8 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"path/filepath"
+	"strings"
 
 	"github.com/tencent-connect/botgo/constant"
 	"github.com/tencent-connect/botgo/dto"
@@ -33,6 +35,7 @@ func (c *QQChannel) uploadLocalMedia(
 	chatKind string,
 	chatID string,
 	partType string,
+	filename string,
 	localPath string,
 ) ([]byte, error) {
 	content, err := os.ReadFile(localPath)
@@ -40,8 +43,16 @@ func (c *QQChannel) uploadLocalMedia(
 		return nil, fmt.Errorf("read local media: %w", err)
 	}
 
+	filename = strings.TrimSpace(filename)
+	if filename == "" {
+		filename = filepath.Base(localPath)
+	} else {
+		filename = filepath.Base(filename)
+	}
+
 	payload := map[string]any{
 		"file_type":    qqFileType(partType),
+		"file_name":    filename,
 		"srv_send_msg": false,
 		"file_data":    base64.StdEncoding.EncodeToString(content),
 	}

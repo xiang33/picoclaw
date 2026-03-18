@@ -354,7 +354,7 @@ func (c *QQChannel) SendMedia(ctx context.Context, msg bus.OutboundMediaMessage)
 			return fmt.Errorf("qq send media: resolve local media ref %q: %w", part.Ref, err)
 		}
 
-		fileInfo, err := c.uploadLocalMedia(ctx, chatKind, msg.ChatID, part.Type, resolved)
+		fileInfo, err := c.uploadLocalMedia(ctx, chatKind, msg.ChatID, part.Type, part.Filename, resolved)
 		if err != nil {
 			logger.ErrorCF("qq", "Failed to upload local media", map[string]any{
 				"type":     part.Type,

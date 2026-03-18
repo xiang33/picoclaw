@@ -166,6 +166,9 @@ func TestSendMedia_LocalFileUploadsThenSendsRichMediaMessage(t *testing.T) {
 	if fileData == "" {
 		t.Fatal("file_data is empty, want base64-encoded local file contents")
 	}
+	if payload["file_name"] != "report.pdf" {
+		t.Fatalf("file_name = %v, want %q", payload["file_name"], "report.pdf")
+	}
 
 	if len(api.groupMessages) != 1 {
 		t.Fatalf("group message count = %d, want 1", len(api.groupMessages))
