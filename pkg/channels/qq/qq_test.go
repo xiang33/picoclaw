@@ -67,7 +67,7 @@ type transportCall struct {
 	body   any
 }
 
-func (f *fakeQQAPI) Transport(ctx context.Context, method, url string, body interface{}) ([]byte, error) {
+func (f *fakeQQAPI) Transport(ctx context.Context, method, url string, body any) ([]byte, error) {
 	f.transportCalls = append(f.transportCalls, transportCall{
 		method: method,
 		url:    url,
