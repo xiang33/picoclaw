@@ -18,14 +18,14 @@ import (
 
 // mockQQAPI implements qqAPI for testing
 type mockQQAPI struct {
-	callCount      atomic.Int32
-	wsCalled       atomic.Bool
-	postCalled     atomic.Bool
-	lastChatID     string
-	lastChatKind   string
-	shouldFail     bool
-	failErr        error
-	failRemaining  atomic.Int32
+	callCount     atomic.Int32
+	wsCalled      atomic.Bool
+	postCalled    atomic.Bool
+	lastChatID    string
+	lastChatKind  string
+	shouldFail    bool
+	failErr       error
+	failRemaining atomic.Int32
 }
 
 func (m *mockQQAPI) WS(ctx context.Context, params map[string]string, body string) (*dto.WebsocketAP, error) {
@@ -35,7 +35,9 @@ func (m *mockQQAPI) WS(ctx context.Context, params map[string]string, body strin
 	}, nil
 }
 
-func (m *mockQQAPI) PostGroupMessage(ctx context.Context, groupID string, msg dto.APIMessage, opt ...options.Option) (*dto.Message, error) {
+func (m *mockQQAPI) PostGroupMessage(
+	ctx context.Context, groupID string, msg dto.APIMessage, opt ...options.Option,
+) (*dto.Message, error) {
 	m.postCalled.Store(true)
 	m.lastChatID = groupID
 	m.lastChatKind = "group"
@@ -51,7 +53,9 @@ func (m *mockQQAPI) PostGroupMessage(ctx context.Context, groupID string, msg dt
 	return &dto.Message{ID: "msg-123"}, nil
 }
 
-func (m *mockQQAPI) PostC2CMessage(ctx context.Context, userID string, msg dto.APIMessage, opt ...options.Option) (*dto.Message, error) {
+func (m *mockQQAPI) PostC2CMessage(
+	ctx context.Context, userID string, msg dto.APIMessage, opt ...options.Option,
+) (*dto.Message, error) {
 	m.postCalled.Store(true)
 	m.lastChatID = userID
 	m.lastChatKind = "direct"
@@ -78,12 +82,12 @@ func newTestQQChannel(t *testing.T, api *mockQQAPI) *QQChannel {
 	}
 
 	ch := &QQChannel{
-		BaseChannel:     channels.NewBaseChannel("qq", cfg, nil, config.FlexibleStringSlice{"*"}),
-		config:          cfg,
-		api:             api,
-		dedup:           make(map[string]time.Time),
-		done:            make(chan struct{}),
-		groupRateLimiter: newRateLimiter(500 * time.Millisecond),
+		BaseChannel:       channels.NewBaseChannel("qq", cfg, nil, config.FlexibleStringSlice{"*"}),
+		config:            cfg,
+		api:               api,
+		dedup:             make(map[string]time.Time),
+		done:              make(chan struct{}),
+		groupRateLimiter:  newRateLimiter(500 * time.Millisecond),
 		directRateLimiter: newRateLimiter(200 * time.Millisecond),
 	}
 	ch.SetRunning(true)
@@ -102,7 +106,6 @@ func TestSend_Success(t *testing.T) {
 		ChatID:  "group-1",
 		Content: "Hello",
 	})
-
 	if err != nil {
 		t.Errorf("expected no error, got %v", err)
 	}
@@ -114,7 +117,7 @@ func TestSend_Success(t *testing.T) {
 // TestSend_WithRetry tests that retries happen on transient errors
 func TestSend_WithRetry(t *testing.T) {
 	api := &mockQQAPI{
-		shouldFail:     true,
+		shouldFail:    true,
 		failErr:       errors.New("connection reset"),
 		failRemaining: atomic.Int32{},
 	}
@@ -127,7 +130,6 @@ func TestSend_WithRetry(t *testing.T) {
 		ChatID:  "group-1",
 		Content: "Hello",
 	})
-
 	// Should succeed after retries
 	if err != nil {
 		t.Errorf("expected success after retry, got %v", err)
@@ -140,7 +142,7 @@ func TestSend_WithRetry(t *testing.T) {
 // TestSend_NonRetryableError tests that non-retryable errors don't retry
 func TestSend_NonRetryableError(t *testing.T) {
 	api := &mockQQAPI{
-		shouldFail:     true,
+		shouldFail:    true,
 		failErr:       errors.New("unauthorized"),
 		failRemaining: atomic.Int32{},
 	}
@@ -166,7 +168,7 @@ func TestSend_NonRetryableError(t *testing.T) {
 // TestSend_ContextCancellation tests that retries stop on context cancellation
 func TestSend_ContextCancellation(t *testing.T) {
 	api := &mockQQAPI{
-		shouldFail:     true,
+		shouldFail:    true,
 		failErr:       errors.New("timeout"),
 		failRemaining: atomic.Int32{},
 	}
@@ -414,9 +416,9 @@ func TestQQChannel_ResetSessionState(t *testing.T) {
 // TestQQChannel_ResetSessionState_ReasoningChannel tests that reasoning channel is re-registered
 func TestQQChannel_ResetSessionState_ReasoningChannel(t *testing.T) {
 	ch := &QQChannel{
-		BaseChannel:      channels.NewBaseChannel("qq", config.QQConfig{}, nil, config.FlexibleStringSlice{"*"}),
-		config:           config.QQConfig{ReasoningChannelID: "reasoning-group"},
-		dedup:            make(map[string]time.Time),
+		BaseChannel:       channels.NewBaseChannel("qq", config.QQConfig{}, nil, config.FlexibleStringSlice{"*"}),
+		config:            config.QQConfig{ReasoningChannelID: "reasoning-group"},
+		dedup:             make(map[string]time.Time),
 		groupRateLimiter:  newRateLimiter(500 * time.Millisecond),
 		directRateLimiter: newRateLimiter(200 * time.Millisecond),
 	}
@@ -431,9 +433,9 @@ func TestQQChannel_ResetSessionState_ReasoningChannel(t *testing.T) {
 // TestQQChannel_ConfigDrivenParams tests that config values override defaults.
 func TestQQChannel_ConfigDrivenParams(t *testing.T) {
 	tests := []struct {
-		name   string
-		setup  func(*config.QQConfig)
-		check  func(*testing.T, *QQChannel)
+		name  string
+		setup func(*config.QQConfig)
+		check func(*testing.T, *QQChannel)
 	}{
 		{
 			name:  "reconnect initial uses config when set",
@@ -490,7 +492,7 @@ func TestQQChannel_ConfigDrivenParams(t *testing.T) {
 			},
 		},
 		{
-			name:  "rate limiters use config values",
+			name: "rate limiters use config values",
 			setup: func(cfg *config.QQConfig) {
 				cfg.RateLimitGroupMs = 1000
 				cfg.RateLimitDirectMs = 500

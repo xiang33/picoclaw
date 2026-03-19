@@ -43,9 +43,9 @@ const (
 	bytesPerMiB   = 1024 * 1024
 
 	// Reconnection constants (used as defaults when config values are 0)
-	reconnectInitialDefault    = 5 * time.Second
-	reconnectMaxDefault        = 5 * time.Minute
-	reconnectMultiplier        = 2.0
+	reconnectInitialDefault = 5 * time.Second
+	reconnectMaxDefault     = 5 * time.Minute
+	reconnectMultiplier     = 2.0
 
 	// Retry constants (used as defaults when config values are 0)
 	maxRetriesDefault        = 3
@@ -53,8 +53,8 @@ const (
 	retryMaxDelayDefault     = 10 * time.Second
 
 	// Rate limit defaults
-	rateLimitGroupDefault   = 500 * time.Millisecond
-	rateLimitDirectDefault  = 200 * time.Millisecond
+	rateLimitGroupDefault  = 500 * time.Millisecond
+	rateLimitDirectDefault = 200 * time.Millisecond
 )
 
 type qqAPI interface {
@@ -96,9 +96,9 @@ type QQChannel struct {
 	stopOnce sync.Once
 
 	// Reconnection state
-	reconnectMu     sync.Mutex
-	reconnecting    bool
-	stopReconnect   chan struct{}
+	reconnectMu   sync.Mutex
+	reconnecting  bool
+	stopReconnect chan struct{}
 
 	// Rate limiting
 	groupRateLimiter  *rateLimiter
@@ -270,9 +270,9 @@ func (c *QQChannel) Send(ctx context.Context, msg bus.OutboundMessage) error {
 		if attempt > 0 {
 			backoff := c.calculateBackoff(attempt - 1)
 			logger.InfoCF("qq", "Retrying send", map[string]any{
-				"attempt":  attempt,
-				"chat_id":  msg.ChatID,
-				"backoff":  backoff.String(),
+				"attempt": attempt,
+				"chat_id": msg.ChatID,
+				"backoff": backoff.String(),
 			})
 
 			select {
@@ -1093,15 +1093,15 @@ func (c *QQChannel) reconnect() {
 // resetSessionState clears transient state that may be invalid after reconnection.
 func (c *QQChannel) resetSessionState() {
 	// Clear transient state that may be invalid after reconnection
-	c.chatType.Range(func(key, value interface{}) bool {
+	c.chatType.Range(func(key, value any) bool {
 		c.chatType.Delete(key)
 		return true
 	})
-	c.lastMsgID.Range(func(key, value interface{}) bool {
+	c.lastMsgID.Range(func(key, value any) bool {
 		c.lastMsgID.Delete(key)
 		return true
 	})
-	c.msgSeqCounters.Range(func(key, value interface{}) bool {
+	c.msgSeqCounters.Range(func(key, value any) bool {
 		c.msgSeqCounters.Delete(key)
 		return true
 	})
